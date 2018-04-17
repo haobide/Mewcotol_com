@@ -4,11 +4,12 @@
     using System.Diagnostics;
     using System.IO;
     using System.Threading.Tasks;
+    using System.Text;
     
     using Mewcotol_Com.Message;
     
     
-    public abstract class MewTransport : IDisposable
+    public  class MewTransport : IDisposable
     {
         private readonly object _syncLock = new object();
         private int _retries = Mewcotol.DefaultRetries;
@@ -93,7 +94,7 @@
         /// <summary>
         ///     Gets the stream resource.
         /// </summary>
-        internal IStreamResource StreamResource
+        public IStreamResource StreamResource
         {
             get { return _streamResource; }
         }
@@ -257,15 +258,38 @@
         /// <summary>
         ///     Provide hook to do transport level message validation.
         /// </summary>
-        internal abstract void OnValidateResponse (IMewMsg request, IMewMsg response);
+        internal virtual void OnValidateResponse (IMewMsg request, IMewMsg response)
+        {
+            if (request.StationID != response.StationID)
+            {
+                string msg = $"Response was not of expected transaction ID. Expected {request.StationID}, received {response.StationID}.";
+                throw new Exception (msg);
+            }
+        }
         
         
-        internal abstract IMewMsg ReadResponse<T>()
-        where T : IMewMsg, new ();
+        internal virtual IMewMsg ReadResponse<T>()
+        where T : IMewMsg, new ()
+        {
+            var response = StreamResource.ReadLine();
+            
+            if (response.Length == 0)
+            {
+                return new T();
+            }
+            
+            byte[] frame = Encoding.ASCII.GetBytes (response);
+            return CreateResponse<T> (frame);
+        }
         
         
         
-        internal abstract void Write (IMewMsg message);
+        internal virtual void Write (IMewMsg message)
+        {
+            byte[] frame = message.BuildMessageFrame();
+            Debug.WriteLine ($"TX: {string.Join(", ", frame)}");
+            StreamResource.Write (frame, 0, frame.Length);
+        }
         
         /// <summary>
         ///     Releases unmanaged and - optionally - managed resources
@@ -290,6 +314,7 @@
             Dispose (true);
             GC.SuppressFinalize (this);
         }
+        
         private static void Sleep (int millisecondsTimeout)
         {
             Task.Delay (millisecondsTimeout).Wait();

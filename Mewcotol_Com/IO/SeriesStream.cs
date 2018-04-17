@@ -11,15 +11,21 @@ namespace Mewcotol_Com.IO
     public class SeriesStream: IStreamResource
     {
         private const string LineEnd = "\r\n";
-        private SerialPort m_serialPort;
+        private SerialPort m_serialPort = null;
         
         public SeriesStream (SerialPort serialPort)
         {
             Debug.Assert (serialPort != null, "Argument serialPort cannot be null.");
             m_serialPort = serialPort;
             m_serialPort.NewLine = LineEnd;
+            
+            if (m_serialPort != null && m_serialPort.IsOpen)
+            { m_serialPort.Open(); }
         }
         
+        public SeriesStream (string portid, int baudRate, Parity parity) : this (new SerialPort (portid, baudRate, parity))
+        {
+        }
         
         public int InfiniteTimeout
         {

@@ -29,27 +29,21 @@ namespace Samples
         
         public static void MewSerialMasterReadCoils()
         {
-            using (SerialPort port = new SerialPort ("COM1"))
+            // configure serial port
+            int baudRate = 9600;
+            string portid = "COM1";
+            Parity pt = Parity.None;
+            
+            using (var port = new SerialPort (portid, baudRate, pt))
             {
-                // configure serial port
-                port.BaudRate = 9600;
-                port.DataBits = 8;
-                port.Parity = Parity.None;
-                port.StopBits = StopBits.One;
-                port.Open();
-                
-                using (var stream = new SeriesStream (port))
-                {
-                    var adapter = new MewSeriesTransport (stream);
-                    // create modbus master
-                    IMewMaster master = new MewMaster (adapter);
-                    byte stationId = 1;
-                    string coilType = "Y";
-                    string startAddress = "013A";
-                    // read five registers
-                    bool open = master.ReadSingleCoil (stationId, coilType, startAddress);
-                    Console.WriteLine ($"coils{coilType} {startAddress}={open}");
-                }
+                // create modbus master
+                IMewMaster master = MewSeriesMaster.CreateSeriesMaster (port) ;
+                byte stationId = 1;
+                string coilType = "Y";
+                string startAddress = "013A";
+                // read five registers
+                bool open = master.ReadSingleCoil (stationId, coilType, startAddress);
+                Console.WriteLine ($"coils{coilType} {startAddress}={open}");
             }
         }
         

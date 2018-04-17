@@ -8,7 +8,7 @@ using Mewcotol_Com.Message;
 
 namespace Mewcotol_Com.Device
 {
-    public class MewMaster : MewDevice, IMewMaster
+    public abstract class MewMaster : MewDevice, IMewMaster
     {
         public MewMaster (MewTransport trs) : base (trs)
         {
@@ -229,5 +229,8 @@ namespace Mewcotol_Com.Device
             results = Utility.UtilityBase.HexToInt16 (data);
             return results;
         }
+        
+        
+        
     }
 }
